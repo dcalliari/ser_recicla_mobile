@@ -9,7 +9,9 @@
     "prebuild": "expo prebuild",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
     "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run format && npm run type-check && npm run prebuild"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
