@@ -6,8 +6,8 @@ export interface Universidade {
   estado: string;
 }
 
-export type UniversidadeFormData = Omit<Universidade, "id">;
-export type UniversidadeCreateData = Omit<Universidade, "id">;
+export type UniversidadeFormData = Omit<Universidade, 'id'>;
+export type UniversidadeCreateData = Omit<Universidade, 'id'>;
 export type UniversidadeUpdateData = Partial<Universidade> & { id: number };
 
 export interface Unidade {
@@ -37,7 +37,7 @@ export interface Curso {
   id: number;
   nome: string;
   unidade: Unidade;
-  universidade: Unidade["universidade"];
+  universidade: Unidade['universidade'];
   duracao: string;
 }
 
