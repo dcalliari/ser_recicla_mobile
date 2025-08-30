@@ -7,13 +7,16 @@ export default function TabLayout() {
     <AuthGuard>
       <Tabs
         screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: 'black',
+          headerShown: true,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: 'green',
+          headerTitleAlign: 'center',
         }}>
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            headerShadowVisible: false,
+            title: 'Ser Recicla',
             tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
           }}
         />
