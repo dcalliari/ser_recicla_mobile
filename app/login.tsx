@@ -41,7 +41,7 @@ export default function LoginScreen() {
     try {
       await login(formData.username, formData.password);
       // Redireciona para tela principal após login bem-sucedido
-      router.replace('/(drawer)');
+      router.replace('/(tabs)');
     } catch (error) {
       if (error instanceof APIValidationError) {
         // Trata erros de validação da API
