@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { storage } from '~/lib/storage';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -133,16 +134,18 @@ export default function OnboardingScreen() {
 
   const viewConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
 
-  const goToNext = () => {
+  const goToNext = async () => {
     if (currentIndex < onboardingData.length - 1) {
       slidesRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      // Última tela - ir para login
+      // Última tela - marcar onboarding como completo e ir para login
+      await storage.setOnboardingCompleted();
       router.replace('/login');
     }
   };
 
-  const skipOnboarding = () => {
+  const skipOnboarding = async () => {
+    await storage.setOnboardingCompleted();
     router.replace('/login');
   };
 
