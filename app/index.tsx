@@ -23,10 +23,8 @@ export default function Index() {
         // Onboarding completed, check authentication
         await checkAuth();
 
-        // Get the current authentication status after checkAuth completes
-        const currentAuth = useAuthStore.getState().isAuthenticated;
-
-        if (currentAuth) {
+        // If authenticated, go to tabs, otherwise go to login
+        if (isAuthenticated) {
           router.replace('/(tabs)');
         } else {
           router.replace('/login');
