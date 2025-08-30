@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Container } from '../../components/Container';
 import { useAuthStore } from '../../store/store';
 
-export default function Home() {
+export default function Profile() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
@@ -33,7 +33,7 @@ export default function Home() {
     <>
       <Stack.Screen
         options={{
-          title: 'Home',
+          title: 'Profile',
           headerRight: () => (
             <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
               <Ionicons name="log-out-outline" size={24} color="#059669" />

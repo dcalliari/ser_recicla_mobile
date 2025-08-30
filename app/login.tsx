@@ -3,9 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useAuthStore } from '../store/store';
-import { validateLoginCredentials, type LoginCredentials } from '../lib/validation';
-import { APIError, APIValidationError } from '../lib/api';
+import { useAuthStore } from '~/store/store';
+import { validateLoginCredentials, type LoginCredentials } from '~/lib/validation';
+import { APIError, APIValidationError } from '~/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
@@ -41,7 +41,7 @@ export default function LoginScreen() {
     try {
       await login(formData.username, formData.password);
       // Redireciona para tela principal após login bem-sucedido
-      router.replace('/(drawer)');
+      router.replace('/(tabs)');
     } catch (error) {
       if (error instanceof APIValidationError) {
         // Trata erros de validação da API
