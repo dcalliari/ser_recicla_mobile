@@ -3,10 +3,11 @@ import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useAuthStore } from '../store/store';
-import { validateLoginCredentials, type LoginCredentials } from '../lib/validation';
-import { APIError, APIValidationError } from '../lib/api';
+import { useAuthStore } from '~/store/store';
+import { validateLoginCredentials, type LoginCredentials } from '~/lib/validation';
+import { APIError, APIValidationError } from '~/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { storage } from '~/lib/storage';
 
 export default function LoginScreen() {
   const { login, isLoading } = useAuthStore();
@@ -40,6 +41,8 @@ export default function LoginScreen() {
 
     try {
       await login(formData.username, formData.password);
+      // Mark onboarding as completed after successful authentication
+      await storage.setOnboardingCompleted();
       // Redireciona para tela principal após login bem-sucedido
       router.replace('/(drawer)');
     } catch (error) {
