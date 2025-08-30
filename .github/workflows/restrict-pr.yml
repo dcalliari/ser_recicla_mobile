@@ -8,8 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ensure PR comes from dev
+        env:
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
-          if [[ "${{ github.event.pull_request.head.ref }}" != "dev" ]]; then
+          if [[ "$PR_BRANCH" != "dev" ]]; then
             echo "❌ Only PRs from dev → master are allowed."
             exit 1
           fi
