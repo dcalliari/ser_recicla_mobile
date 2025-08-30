@@ -7,7 +7,6 @@ import { useAuthStore } from '~/store/store';
 import { validateLoginCredentials, type LoginCredentials } from '~/lib/validation';
 import { APIError, APIValidationError } from '~/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
-import { storage } from '~/lib/storage';
 
 export default function LoginScreen() {
   const { login, isLoading } = useAuthStore();
@@ -41,8 +40,6 @@ export default function LoginScreen() {
 
     try {
       await login(formData.username, formData.password);
-      // Mark onboarding as completed after successful authentication
-      await storage.setOnboardingCompleted();
       // Redireciona para tela principal após login bem-sucedido
       router.replace('/(tabs)');
     } catch (error) {
