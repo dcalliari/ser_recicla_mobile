@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Ensure PR comes from dev
         run: |
-          if [[ "${{ github.event.pull_request.head.ref }}" != "dev" ]]; then
+          if [[ "${{ github.head_ref }}" != "dev" ]]; then
             echo "❌ Only PRs from dev → master are allowed."
             exit 1
           fi
