@@ -7,28 +7,32 @@ export default function TabLayout() {
     <AuthGuard>
       <Tabs
         screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: 'black',
+          headerShown: true,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: 'green',
+          headerTitleAlign: 'center',
         }}>
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            headerShadowVisible: false,
+            title: 'Ser Recicla',
             tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
           }}
         />
         <Tabs.Screen
-          name="two"
+          name="institutional"
           options={{
-            title: 'Tab Two',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            headerShadowVisible: false,
+            title: 'Institucional',
+            tabBarIcon: ({ color }) => <TabBarIcon name="institution" color={color} size={20} />,
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="donations"
           options={{
-            title: 'Profile',
-            tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+            title: 'Doações',
+            tabBarIcon: ({ color }) => <TabBarIcon name="gift" color={color} />,
           }}
         />
       </Tabs>

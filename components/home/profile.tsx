@@ -1,9 +1,9 @@
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Container } from '../../components/Container';
-import { useAuthStore } from '../../store/store';
+import { Container } from '~/components/Container';
+import { useAuthStore } from '~/store/store';
 
 export default function Profile() {
   const { user, logout } = useAuthStore();
@@ -31,16 +31,6 @@ export default function Profile() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: 'Profile',
-          headerRight: () => (
-            <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
-              <Ionicons name="log-out-outline" size={24} color="#059669" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
       <Container>
         <View className="flex-1 items-center justify-center p-4">
           <View className="mb-8 items-center">

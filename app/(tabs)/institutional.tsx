@@ -2,27 +2,21 @@ import { useState } from 'react';
 import { Dimensions } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 
-import Overview from '~/components/home/overview';
-import Metrics from '~/components/home/metrics';
-import Charts from '~/components/home/charts';
-import Profile from '~/components/home/profile';
+import Users from '~/components/institutional/users';
+import Classes from '~/components/institutional/classes';
 
 const renderScene = SceneMap({
-  first: Overview,
-  second: Metrics,
-  third: Charts,
-  fourth: Profile,
+  first: Classes,
+  second: Users,
 });
 
 const initialLayout = { width: Dimensions.get('window').width };
 
-export default function Home() {
+export default function Institutional() {
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'first', title: 'Geral' },
-    { key: 'second', title: 'Métricas' },
-    { key: 'third', title: 'Gráficos' },
-    { key: 'fourth', title: 'Perfil' },
+    { key: 'first', title: 'Turmas' },
+    { key: 'second', title: 'Usuários' },
   ]);
 
   return (
