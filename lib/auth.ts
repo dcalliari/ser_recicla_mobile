@@ -50,6 +50,38 @@ export class AuthService {
   async updateUserInfo(data: Partial<Omit<AuthUser, 'id'>>): Promise<AuthUser> {
     return await api.put<AuthUser>('/v1/auth/me/', data);
   }
+
+  /**
+   * Validates a matricula number.
+   * @param matricula - The matricula number to validate.
+   * @throws {APIError | APIValidationError} If the request fails or validation errors occur.
+   * @returns {Promise<{valid: boolean, turma?: string | null, curso?: string | null, message?: string}>} The validation result.
+   */
+  async validateMatricula(
+    matricula: string
+  ): Promise<{ valid: boolean; turma?: string | null; curso?: string | null; message?: string }> {
+    return await api.post('/v1/auth/validar-matricula/', { matricula });
+  }
+
+  /**
+   * Finalizes the user registration.
+   * @param data - The registration data.
+   * @throws {APIError | APIValidationError} If the request fails or validation errors occur.
+   * @returns {Promise<TokenResponse>} The authentication tokens.
+   */
+  async finalizarCadastro(data: {
+    matricula: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    username: string;
+    password: string;
+    password_confirm: string;
+  }): Promise<TokenResponse> {
+    const response = await api.post<TokenResponse>('/v1/auth/finalizar-cadastro/', data);
+    api.accessToken = response.access;
+    return response;
+  }
 }
 
 /**

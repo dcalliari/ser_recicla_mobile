@@ -177,6 +177,20 @@ export default function LoginScreen() {
                 <Text className="text-base font-medium text-white">Entrar</Text>
               )}
             </TouchableOpacity>
+
+            {/* Separador */}
+            <View className="my-6 flex-row items-center">
+              <View className="h-px flex-1 bg-gray-300" />
+              <Text className="mx-4 text-gray-500">ou</Text>
+              <View className="h-px flex-1 bg-gray-300" />
+            </View>
+
+            {/* Botão Acessar com Matrícula */}
+            <TouchableOpacity
+              onPress={() => router.push('/matricula-login')}
+              className="items-center justify-center rounded-lg border-2 border-green-600 bg-white py-3">
+              <Text className="text-base font-medium text-green-600">Acessar com matrícula</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </LinearGradient>
