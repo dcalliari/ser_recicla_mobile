@@ -25,7 +25,7 @@ export default function TabLayout() {
           options={{
             headerShadowVisible: false,
             title: 'Institucional',
-            tabBarIcon: ({ color }) => <TabBarIcon name="institution" color={color} />,
+            tabBarIcon: ({ color }) => <TabBarIcon name="institution" color={color} size={20} />,
           }}
         />
         <Tabs.Screen
