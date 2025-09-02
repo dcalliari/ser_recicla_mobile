@@ -319,11 +319,6 @@ export default function Users() {
                   keyboardType="default"
                   autoCorrect={false}
                 />
-                {matriculas.length > 0 && !matriculaInput && (
-                  <View className="ml-2">
-                    <Text className="text-xs text-gray-400">⌫</Text>
-                  </View>
-                )}
               </View>
             </View>
 
