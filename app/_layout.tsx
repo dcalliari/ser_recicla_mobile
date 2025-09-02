@@ -15,7 +15,6 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ title: 'Modal', presentation: 'modal' }} />
       </Stack>
     </GestureHandlerRootView>
   );
