@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
 import { TabBarIcon } from '~/components/TabBarIcon';
 import { AuthGuard } from '~/components/AuthGuard';
+import { usePermissions } from '~/lib/hooks/usePermissions';
 
 export default function TabLayout() {
+  const { isStudent } = usePermissions();
+
   return (
     <AuthGuard>
       <Tabs
@@ -26,6 +29,7 @@ export default function TabLayout() {
             headerShadowVisible: false,
             title: 'Institucional',
             tabBarIcon: ({ color }) => <TabBarIcon name="institution" color={color} size={20} />,
+            href: isStudent() ? null : '/institutional',
           }}
         />
         <Tabs.Screen
@@ -33,6 +37,7 @@ export default function TabLayout() {
           options={{
             title: 'Doações',
             tabBarIcon: ({ color }) => <TabBarIcon name="gift" color={color} />,
+            href: isStudent() ? null : '/donations',
           }}
         />
       </Tabs>
