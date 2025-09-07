@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { api } from '~/lib/api';
+import { auth } from '~/lib/auth';
 import type { Usuario } from '~/lib/types/user';
 import { UsuarioPerfil } from '~/lib/types/user';
 
@@ -26,6 +27,19 @@ export default function Users() {
   const [userToDelete, setUserToDelete] = useState<Usuario | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Estados para cadastro de usuário único
+  const [newUserModalVisible, setNewUserModalVisible] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    username: '',
+    password: '',
+    password_confirm: '',
+    matricula: ''
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
 
   useEffect(() => {
     fetchUsuarios();
@@ -100,6 +114,65 @@ export default function Users() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!newUserData.first_name.trim() || !newUserData.last_name.trim() || 
+        !newUserData.email.trim() || !newUserData.username.trim() ||
+        !newUserData.password.trim() || !newUserData.password_confirm.trim() ||
+        !newUserData.matricula.trim()) {
+      Alert.alert('Erro', 'Todos os campos são obrigatórios');
+      return;
+    }
+
+    if (newUserData.password !== newUserData.password_confirm) {
+      Alert.alert('Erro', 'As senhas não coincidem');
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      await api.post('/v1/auth/detail/usuarios/', {
+        matricula: newUserData.matricula,
+        first_name: newUserData.first_name,
+        last_name: newUserData.last_name,
+        email: newUserData.email,
+        username: newUserData.username,
+        password: newUserData.password,
+        password_confirm: newUserData.password_confirm
+      });
+      Alert.alert('Sucesso', 'Usuário criado com sucesso');
+      setNewUserModalVisible(false);
+      setNewUserData({ 
+        first_name: '', 
+        last_name: '', 
+        email: '', 
+        username: '',
+        password: '', 
+        password_confirm: '',
+        matricula: ''
+      });
+      fetchUsuarios(); // Refresh the list
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
+      let errorMessage = 'Falha ao criar usuário';
+      
+      if (error?.errors) {
+        // Handle validation errors
+        const errorFields = Object.keys(error.errors);
+        if (errorFields.length > 0) {
+          const firstField = errorFields[0];
+          const firstError = error.errors[firstField][0];
+          errorMessage = `${firstField}: ${firstError}`;
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const getPerfilBadgeColor = (perfil: string) => {
     switch (perfil) {
       case 'ALUNO':
@@ -167,8 +240,16 @@ export default function Users() {
 
       {/* Actions Section */}
       <View className="p-4">
-        {/* Button */}
-        <View className="mb-4">
+        {/* Buttons */}
+        <View className="mb-4 space-y-3">
+          <TouchableOpacity
+            className="flex-row items-center justify-center rounded-lg mb-2 bg-blue-600 px-4 py-3 shadow-sm"
+            onPress={() => setNewUserModalVisible(true)}>
+            <Text className="text-center font-semibold text-white">
+              Novo Usuário
+            </Text>
+          </TouchableOpacity>
+          
           <TouchableOpacity
             className="flex-row items-center justify-center rounded-lg bg-green-600 px-4 py-3 shadow-sm"
             onPress={() => setModalVisible(true)}>
@@ -340,6 +421,130 @@ export default function Users() {
                   <ActivityIndicator color="white" />
                 ) : (
                   <Text className="text-white">Pré-cadastrar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para cadastro de usuário único */}
+      <Modal
+        transparent={true}
+        visible={newUserModalVisible}
+        animationType="fade"
+        onRequestClose={() => setNewUserModalVisible(false)}>
+        <View className="flex-1 justify-center bg-black/20 p-4">
+          <View className="rounded-lg bg-white p-6 shadow-xl">
+            <Text className="mb-4 text-xl font-semibold text-gray-900">
+              Novo Usuário
+            </Text>
+            <Text className="mb-4 text-gray-600">
+              Preencha os dados para criar um novo usuário
+            </Text>
+
+            <View className="space-y-4">
+               <View>
+                 <Text className="mb-2 text-sm font-medium text-gray-700">Nome</Text>
+                 <TextInput
+                   className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                   placeholder="Digite o primeiro nome"
+                   value={newUserData.first_name}
+                   onChangeText={(text) => setNewUserData(prev => ({ ...prev, first_name: text }))}
+                 />
+               </View>
+
+               <View>
+                 <Text className="mb-2 text-sm font-medium text-gray-700">Sobrenome</Text>
+                 <TextInput
+                   className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                   placeholder="Digite o sobrenome"
+                   value={newUserData.last_name}
+                   onChangeText={(text) => setNewUserData(prev => ({ ...prev, last_name: text }))}
+                 />
+               </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Email</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o email"
+                  value={newUserData.email}
+                  onChangeText={(text) => setNewUserData(prev => ({ ...prev, email: text }))}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Nome de Usuário</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o nome de usuário"
+                  value={newUserData.username}
+                  onChangeText={(text) => setNewUserData(prev => ({ ...prev, username: text }))}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Senha</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite a senha"
+                  value={newUserData.password}
+                  onChangeText={(text) => setNewUserData(prev => ({ ...prev, password: text }))}
+                  secureTextEntry
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Confirmar Senha</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Confirme a senha"
+                  value={newUserData.password_confirm}
+                  onChangeText={(text) => setNewUserData(prev => ({ ...prev, password_confirm: text }))}
+                  secureTextEntry
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Matrícula</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite a matrícula"
+                  value={newUserData.matricula}
+                  onChangeText={(text) => setNewUserData(prev => ({ ...prev, matricula: text }))}
+                />
+              </View>
+            </View>
+
+            <View className="mt-6 flex-row justify-end space-x-3">
+              <TouchableOpacity
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2"
+                onPress={() => {
+                   setNewUserModalVisible(false);
+                   setNewUserData({ 
+                     first_name: '', 
+                     last_name: '', 
+                     email: '', 
+                     username: '',
+                     password: '', 
+                     password_confirm: '',
+                     matricula: ''
+                   });
+                 }}>
+                <Text className="text-gray-700">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="rounded-lg bg-blue-600 px-4 py-2 shadow-sm"
+                onPress={handleCreateUser}
+                disabled={creatingUser}>
+                {creatingUser ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white">Criar Usuário</Text>
                 )}
               </TouchableOpacity>
             </View>
