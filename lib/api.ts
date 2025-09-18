@@ -40,7 +40,7 @@ export class APIValidationError extends APIError {
 class APIService {
   public accessToken: string | null = null;
   private refreshPromise: Promise<boolean> | null = null;
-  private baseURL: string = 'https://ser-recicla.vsl-dev.me/api';
+  private baseURL: string = 'https://ser-recicla-hml.vsl-dev.me/api';
 
   /**
    * Retries a request with a refreshed access token

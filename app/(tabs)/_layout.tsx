@@ -27,8 +27,8 @@ export default function TabLayout() {
           name="institutional"
           options={{
             headerShadowVisible: false,
-            title: 'Institucional',
-            tabBarIcon: ({ color }) => <TabBarIcon name="institution" color={color} size={20} />,
+            title: 'Usuários',
+            tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} size={23} />,
             href: isStudent() ? null : '/institutional',
           }}
         />

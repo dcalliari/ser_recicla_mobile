@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
 import {
   View,
@@ -27,6 +28,27 @@ export default function Users() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Estados para cadastro de usuário único
+  const [newUserModalVisible, setNewUserModalVisible] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    username: '',
+    password: '',
+    password_confirm: '',
+    matricula: '',
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+
+  // Estados para filtros
+  const [filterTab, setFilterTab] = useState<'todos' | 'cadastrados' | 'pre-cadastrados'>(
+    'cadastrados'
+  );
+
+  // Estados para edição
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+
   useEffect(() => {
     fetchUsuarios();
   }, []);
@@ -48,6 +70,38 @@ export default function Users() {
     setDeleteModalVisible(true);
   };
 
+  // Função para edição de usuário
+  const handleEditUser = (user: Usuario) => {
+    setEditingUser(user);
+    const isPreCadastrado = !(user.first_name && user.last_name && user.email);
+
+    if (isPreCadastrado) {
+      // Para pré-cadastrados, apenas completar o cadastro
+      setNewUserData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        username: '',
+        password: '',
+        password_confirm: '',
+        matricula: user.matricula,
+      });
+    } else {
+      // Para usuários completos, carregar dados existentes
+      setNewUserData({
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        username: user.email, // Assume que username é baseado no email
+        password: '', // Senha não é carregada por segurança
+        password_confirm: '',
+        matricula: user.matricula,
+      });
+    }
+
+    setNewUserModalVisible(true);
+  };
+
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
 
@@ -64,16 +118,29 @@ export default function Users() {
   };
 
   const filteredUsuarios = usuarios.filter((usuario) => {
-    if (!searchQuery.trim()) return true;
+    // Primeiro aplica o filtro de busca
+    let matchesSearch = true;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      matchesSearch =
+        usuario.first_name.toLowerCase().includes(query) ||
+        usuario.last_name.toLowerCase().includes(query) ||
+        usuario.email.toLowerCase().includes(query) ||
+        usuario.matricula.toLowerCase().includes(query) ||
+        UsuarioPerfil[usuario.perfil as keyof typeof UsuarioPerfil]?.toLowerCase().includes(query);
+    }
 
-    const query = searchQuery.toLowerCase();
-    return (
-      usuario.first_name.toLowerCase().includes(query) ||
-      usuario.last_name.toLowerCase().includes(query) ||
-      usuario.email.toLowerCase().includes(query) ||
-      usuario.matricula.toLowerCase().includes(query) ||
-      UsuarioPerfil[usuario.perfil as keyof typeof UsuarioPerfil].toLowerCase().includes(query)
-    );
+    // Depois aplica o filtro por aba
+    let matchesTab = true;
+    if (filterTab === 'cadastrados') {
+      // Usuários cadastrados são aqueles que têm first_name e last_name preenchidos
+      matchesTab = !!(usuario.first_name && usuario.last_name && usuario.email);
+    } else if (filterTab === 'pre-cadastrados') {
+      // Usuários pré-cadastrados são aqueles que só têm matrícula
+      matchesTab = !(usuario.first_name && usuario.last_name && usuario.email);
+    }
+
+    return matchesSearch && matchesTab;
   });
 
   const handleRemoveMatricula = (index: number) => {
@@ -100,6 +167,99 @@ export default function Users() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (
+      !newUserData.first_name.trim() ||
+      !newUserData.last_name.trim() ||
+      !newUserData.email.trim() ||
+      !newUserData.username.trim() ||
+      !newUserData.matricula.trim()
+    ) {
+      Alert.alert('Erro', 'Todos os campos são obrigatórios');
+      return;
+    }
+
+    // Para novos usuários ou edição com senha
+    if (!editingUser || newUserData.password.trim()) {
+      if (!newUserData.password.trim() || !newUserData.password_confirm.trim()) {
+        Alert.alert('Erro', 'Senha é obrigatória');
+        return;
+      }
+
+      if (newUserData.password !== newUserData.password_confirm) {
+        Alert.alert('Erro', 'As senhas não coincidem');
+        return;
+      }
+    }
+
+    setCreatingUser(true);
+    try {
+      if (editingUser) {
+        // Editar usuário existente
+        const updateData: any = {
+          matricula: newUserData.matricula,
+          first_name: newUserData.first_name,
+          last_name: newUserData.last_name,
+          email: newUserData.email,
+          username: newUserData.username,
+        };
+
+        // Só inclui senha se foi preenchida
+        if (newUserData.password.trim()) {
+          updateData.password = newUserData.password;
+          updateData.password_confirm = newUserData.password_confirm;
+        }
+
+        await api.put(`/v1/auth/detail/usuarios/${editingUser.id}/`, updateData);
+        Alert.alert('Sucesso', 'Usuário atualizado com sucesso');
+      } else {
+        // Criar novo usuário
+        await api.post('/v1/auth/detail/usuarios/', {
+          matricula: newUserData.matricula,
+          first_name: newUserData.first_name,
+          last_name: newUserData.last_name,
+          email: newUserData.email,
+          username: newUserData.username,
+          password: newUserData.password,
+          password_confirm: newUserData.password_confirm,
+        });
+        Alert.alert('Sucesso', 'Usuário criado com sucesso');
+      }
+
+      setNewUserModalVisible(false);
+      setEditingUser(null);
+      setNewUserData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        username: '',
+        password: '',
+        password_confirm: '',
+        matricula: '',
+      });
+      fetchUsuarios(); // Refresh the list
+    } catch (error: any) {
+      console.error('Erro ao criar/editar usuário:', error);
+      let errorMessage = editingUser ? 'Falha ao atualizar usuário' : 'Falha ao criar usuário';
+
+      if (error?.errors) {
+        // Handle validation errors
+        const errorFields = Object.keys(error.errors);
+        if (errorFields.length > 0) {
+          const firstField = errorFields[0];
+          const firstError = error.errors[firstField][0];
+          errorMessage = `${firstField}: ${firstError}`;
+        }
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      Alert.alert('Erro', errorMessage);
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const getPerfilBadgeColor = (perfil: string) => {
     switch (perfil) {
       case 'ALUNO':
@@ -115,39 +275,82 @@ export default function Users() {
     }
   };
 
-  const renderUsuario = ({ item }: { item: Usuario }) => (
-    <View className="mx-4 mb-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1">
-          <Text className="text-lg font-semibold text-gray-900">
-            {item.first_name} {item.last_name}
-          </Text>
-          <Text className="text-sm text-gray-600">{item.email}</Text>
-          <Text className="text-sm text-gray-500">{item.matricula}</Text>
+  const renderUsuario = ({ item }: { item: Usuario }) => {
+    const isPreCadastrado = !(item.first_name && item.last_name && item.email);
 
-          <View className="mt-2 flex-row items-center">
-            <View className={`rounded-full px-2 py-1 ${getPerfilBadgeColor(item.perfil)}`}>
-              <Text className="text-xs font-medium">
-                {UsuarioPerfil[item.perfil as keyof typeof UsuarioPerfil]}
+    if (isPreCadastrado) {
+      // Layout simplificado para pré-cadastrados
+      return (
+        <View className="mx-4 mb-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-lg font-semibold text-gray-900">
+                Matrícula: {item.matricula}
               </Text>
+              <View className="mt-2">
+                <View className="self-start rounded-full bg-orange-100 px-2 py-1">
+                  <Text className="text-xs font-medium text-orange-800">Pré-cadastrado</Text>
+                </View>
+              </View>
+            </View>
+
+            <View className="flex-row space-x-2">
+              <TouchableOpacity
+                className="mr-1 rounded-md bg-blue-500 p-2"
+                onPress={() => handleEditUser(item)}>
+                <Feather name="edit-2" size={16} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="rounded-md bg-red-500 p-2"
+                onPress={() => handleDeleteUser(item)}>
+                <Feather name="trash-2" size={16} color="white" />
+              </TouchableOpacity>
             </View>
           </View>
-
-          {item.turma && (
-            <Text className="mt-1 text-xs text-gray-500">Turma: {item.turma.nome}</Text>
-          )}
         </View>
+      );
+    }
 
-        <View className="flex-row">
-          <TouchableOpacity
-            className="rounded-md bg-red-500 px-3 py-2"
-            onPress={() => handleDeleteUser(item)}>
-            <Text className="text-sm text-white">Excluir</Text>
-          </TouchableOpacity>
+    // Layout completo para usuários cadastrados
+    return (
+      <View className="mx-4 mb-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1">
+            <Text className="text-lg font-semibold text-gray-900">
+              {item.first_name} {item.last_name}
+            </Text>
+            <Text className="text-sm text-gray-600">{item.email}</Text>
+            <Text className="text-sm text-gray-500">{item.matricula}</Text>
+
+            <View className="mt-2 flex-row items-center">
+              <View className={`rounded-full px-2 py-1 ${getPerfilBadgeColor(item.perfil)}`}>
+                <Text className="text-xs font-medium">
+                  {UsuarioPerfil[item.perfil as keyof typeof UsuarioPerfil] || item.perfil}
+                </Text>
+              </View>
+            </View>
+
+            {item.turma && (
+              <Text className="mt-1 text-xs text-gray-500">Turma: {item.turma.nome}</Text>
+            )}
+          </View>
+
+          <View className="flex-row space-x-2">
+            <TouchableOpacity
+              className="mr-1 rounded-md bg-blue-500 p-2"
+              onPress={() => handleEditUser(item)}>
+              <Feather name="edit-2" size={16} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="rounded-md bg-red-500 p-2"
+              onPress={() => handleDeleteUser(item)}>
+              <Feather name="trash-2" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -160,21 +363,20 @@ export default function Users() {
 
   return (
     <View className="flex-1 ">
-      {/* Header */}
-      <View className="items-center justify-center border-b border-b-gray-200 px-6 py-4">
-        <Text className="text-gray-600">Gerencie os usuários do sistema institucional</Text>
-      </View>
-
       {/* Actions Section */}
-      <View className="p-4">
-        {/* Button */}
-        <View className="mb-4">
+      <View className="mt-3 px-4 py-2">
+        {/* Buttons */}
+        <View className="mb-2 flex-row">
           <TouchableOpacity
-            className="flex-row items-center justify-center rounded-lg bg-green-600 px-4 py-3 shadow-sm"
+            className="mr-2 flex-1 items-center justify-center rounded-lg bg-blue-600 px-4 py-3 shadow-sm"
+            onPress={() => setNewUserModalVisible(true)}>
+            <Text className="text-center font-semibold text-white">Novo Usuário</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="flex-1 items-center justify-center rounded-lg bg-green-600 px-4 py-3 shadow-sm"
             onPress={() => setModalVisible(true)}>
-            <Text className="text-center font-semibold text-white">
-              Pré-cadastrar Usuários em Lote
-            </Text>
+            <Text className="text-center font-semibold text-white">Pré-cadastrar Lote</Text>
           </TouchableOpacity>
         </View>
 
@@ -190,6 +392,43 @@ export default function Users() {
             <Text className="text-gray-400"></Text>
           </View>
         </View>
+      </View>
+
+      {/* Filter Tabs */}
+      <View className="mx-4 mb-1 flex-row rounded-lg border border-gray-200 bg-gray-50">
+        <TouchableOpacity
+          className="flex-1 rounded-md px-3 py-2"
+          style={filterTab === 'todos' ? { backgroundColor: 'white' } : {}}
+          onPress={() => setFilterTab('todos')}>
+          <Text
+            className={`text-center text-sm font-medium ${
+              filterTab === 'todos' ? 'text-blue-600' : 'text-gray-600'
+            }`}>
+            Todos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 rounded-md px-3 py-2"
+          style={filterTab === 'cadastrados' ? { backgroundColor: 'white' } : {}}
+          onPress={() => setFilterTab('cadastrados')}>
+          <Text
+            className={`text-center text-sm font-medium ${
+              filterTab === 'cadastrados' ? 'text-blue-600' : 'text-gray-600'
+            }`}>
+            Cadastrados
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="flex-1 rounded-md px-3 py-2"
+          style={filterTab === 'pre-cadastrados' ? { backgroundColor: 'white' } : {}}
+          onPress={() => setFilterTab('pre-cadastrados')}>
+          <Text
+            className={`text-center text-sm font-medium ${
+              filterTab === 'pre-cadastrados' ? 'text-blue-600' : 'text-gray-600'
+            }`}>
+            Pré-cadastrados
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Users List */}
@@ -340,6 +579,139 @@ export default function Users() {
                   <ActivityIndicator color="white" />
                 ) : (
                   <Text className="text-white">Pré-cadastrar</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para cadastro/edição de usuário */}
+      <Modal
+        transparent={true}
+        visible={newUserModalVisible}
+        animationType="fade"
+        onRequestClose={() => setNewUserModalVisible(false)}>
+        <View className="flex-1 justify-center bg-black/20 p-4">
+          <View className="rounded-lg bg-white p-6 shadow-xl">
+            <Text className="mb-4 text-xl font-semibold text-gray-900">
+              {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+            </Text>
+            <Text className="mb-4 text-gray-600">
+              {editingUser
+                ? 'Atualize os dados do usuário'
+                : 'Preencha os dados para criar um novo usuário'}
+            </Text>
+
+            <View className="space-y-4">
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Nome</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o primeiro nome"
+                  value={newUserData.first_name}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, first_name: text }))}
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Sobrenome</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o sobrenome"
+                  value={newUserData.last_name}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, last_name: text }))}
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Email</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o email"
+                  value={newUserData.email}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, email: text }))}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Nome de Usuário</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite o nome de usuário"
+                  value={newUserData.username}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, username: text }))}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">
+                  Senha {editingUser ? '(deixe em branco para manter a atual)' : ''}
+                </Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder={editingUser ? 'Nova senha (opcional)' : 'Digite a senha'}
+                  value={newUserData.password}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, password: text }))}
+                  secureTextEntry
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">
+                  Confirmar Senha {editingUser ? '(se informada acima)' : ''}
+                </Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder={editingUser ? 'Confirme a nova senha' : 'Confirme a senha'}
+                  value={newUserData.password_confirm}
+                  onChangeText={(text) =>
+                    setNewUserData((prev) => ({ ...prev, password_confirm: text }))
+                  }
+                  secureTextEntry
+                />
+              </View>
+
+              <View>
+                <Text className="mb-2 text-sm font-medium text-gray-700">Matrícula</Text>
+                <TextInput
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-base"
+                  placeholder="Digite a matrícula"
+                  value={newUserData.matricula}
+                  onChangeText={(text) => setNewUserData((prev) => ({ ...prev, matricula: text }))}
+                />
+              </View>
+            </View>
+
+            <View className="mt-6 flex-row justify-end space-x-3">
+              <TouchableOpacity
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2"
+                onPress={() => {
+                  setNewUserModalVisible(false);
+                  setEditingUser(null);
+                  setNewUserData({
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    username: '',
+                    password: '',
+                    password_confirm: '',
+                    matricula: '',
+                  });
+                }}>
+                <Text className="text-gray-700">Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="rounded-lg bg-blue-600 px-4 py-2 shadow-sm"
+                onPress={handleCreateUser}
+                disabled={creatingUser}>
+                {creatingUser ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text className="text-white">{editingUser ? 'Atualizar' : 'Criar Usuário'}</Text>
                 )}
               </TouchableOpacity>
             </View>
