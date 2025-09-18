@@ -142,6 +142,8 @@ export default function LoginScreen() {
                   <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
                 </View>
                 <TextInput
+                  autoCapitalize='none'
+                  autoCorrect={false}
                   placeholder="Digite sua senha"
                   value={formData.password}
                   onChangeText={(text) => handleInputChange('password', text)}
