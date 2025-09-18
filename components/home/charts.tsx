@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Dimensions } from 'react-native';
+import { View, Text, ScrollView, Dimensions, ViewStyle } from 'react-native';
 import { Container } from '~/components/Container';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { PieChart as RNPieChart } from 'react-native-chart-kit';
 
 const { width } = Dimensions.get('window');
 const isSmallScreen = width < 380;
@@ -36,12 +37,13 @@ const weeklyTrendStatic: TrendDatum[] = [
   { day: 'Dom', kg: 42 },
 ];
 
-const Card: React.FC<{ title: string; subtitle?: string; children: React.ReactNode }> = ({
-  title,
-  subtitle,
-  children,
-}) => (
-  <View className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+const Card: React.FC<{
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  style?: ViewStyle;
+}> = ({ title, subtitle, children, style }) => (
+  <View className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm" style={style}>
     <Text className="mb-1 text-lg font-semibold text-gray-900">{title}</Text>
     {subtitle ? <Text className="mb-3 text-xs text-gray-500">{subtitle}</Text> : null}
     {children}
@@ -118,45 +120,41 @@ const BarChart: React.FC<{
   );
 };
 
-const PieChart: React.FC<{ data: MaterialDatum[] }> = ({ data }) => (
-  <View className="items-center">
-    <View
-      className={`relative ${isSmallScreen ? 'h-28 w-28' : 'h-40 w-40'} mb-4 rounded-full border-8 border-gray-100`}>
-      {data.map((item, index) => {
-        const rotation = data.slice(0, index).reduce((acc, curr) => acc + curr.value, 0) * 3.6;
-        const segmentRotation = item.value * 3.6;
-        return (
-          <View
-            key={index}
-            className="absolute inset-0"
-            style={{ transform: [{ rotate: `${rotation}deg` }] }}>
-            <View
-              className="absolute left-1/2 top-0 h-full w-1/2 origin-left"
-              style={{
-                backgroundColor: item.color,
-                transform: [{ rotate: `${segmentRotation}deg` }],
-              }}
-            />
-          </View>
-        );
-      })}
-      <View className="absolute inset-4 items-center justify-center rounded-full bg-white">
-        <Text className="text-xs text-gray-500">Materiais</Text>
-        <Text className="text-lg font-bold text-gray-800">100%</Text>
-      </View>
+const PieChart: React.FC<{ data: MaterialDatum[] }> = ({ data }) => {
+  const chartData = data.map((item) => ({
+    name: item.name,
+    population: item.value,
+    color: item.color,
+    legendFontColor: '#7F7F7F',
+    legendFontSize: 14,
+  }));
+
+  return (
+    <View className="items-center">
+      <RNPieChart
+        data={chartData}
+        width={isSmallScreen ? 280 : 320}
+        height={isSmallScreen ? 180 : 220}
+        chartConfig={{
+          backgroundColor: '#ffffff',
+          backgroundGradientFrom: '#ffffff',
+          backgroundGradientTo: '#ffffff',
+          decimalPlaces: 0,
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          style: {
+            borderRadius: 16,
+          },
+        }}
+        accessor="population"
+        backgroundColor="transparent"
+        paddingLeft="15"
+        center={[10, 0]}
+        absolute
+      />
     </View>
-    <View className="mt-2 space-y-2">
-      {data.map((item, index) => (
-        <View key={index} className="flex-row items-center">
-          <View className="mr-2 h-3 w-3 rounded-sm" style={{ backgroundColor: item.color }} />
-          <Text className="text-sm text-gray-700">
-            {item.name}: {item.value}%
-          </Text>
-        </View>
-      ))}
-    </View>
-  </View>
-);
+  );
+};
 
 const LineChart: React.FC<{ data: TrendDatum[] }> = ({ data }) => {
   const CHART_HEIGHT = isSmallScreen ? 120 : 160;
@@ -245,16 +243,22 @@ export default function Charts() {
             </View>
           </View>
 
-          <View className="space-y-6">
-            <Card title="Evolução Mensal" subtitle="Coleta x Participantes">
+          <View>
+            <Card
+              title="Evolução Mensal"
+              subtitle="Coleta x Participantes"
+              style={{ marginBottom: 24 }}>
               <BarChart data={monthlyDataStatic} />
             </Card>
 
-            <Card title="Distribuição por Material" subtitle="Percentual do total coletado">
+            <Card
+              title="Distribuição por Material"
+              subtitle="Percentual do total coletado"
+              style={{ marginBottom: 24 }}>
               <PieChart data={materialDataStatic} />
             </Card>
 
-            <Card title="Tendência Semanal" subtitle="Coleta por dia">
+            <Card title="Tendência Semanal" subtitle="Coleta por dia" style={{ marginBottom: 24 }}>
               <LineChart data={weeklyTrendStatic} />
             </Card>
 
@@ -265,6 +269,8 @@ export default function Charts() {
                   collection: item.participants,
                   participants: item.collection,
                 }))}
+                maxCollection={400}
+                maxParticipants={1500}
               />
             </Card>
           </View>
