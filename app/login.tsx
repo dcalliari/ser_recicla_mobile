@@ -14,6 +14,7 @@ export default function LoginScreen() {
     username: '',
     password: '',
   });
+  const [otpRequired, setOtpRequired] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -39,7 +40,7 @@ export default function LoginScreen() {
     setErrors({});
 
     try {
-      await login(formData.username, formData.password);
+      await login(formData.username, formData.password, formData.otp_code);
       // Redireciona para tela principal após login bem-sucedido
       router.replace('/(tabs)');
     } catch (error) {
@@ -50,8 +51,22 @@ export default function LoginScreen() {
           apiErrors[field] = messages[0]; // Pega primeira mensagem de erro
         });
         setErrors(apiErrors);
+        // Se a API indicar que precisa de 2FA, mostramos o campo OTP
+        if (apiErrors['otp_required'] || apiErrors['two_factor'] || apiErrors['otp_code']) {
+          setOtpRequired(true);
+        }
       } else if (error instanceof APIError) {
-        Alert.alert('Erro de Login', error.message);
+        // Heurística para 2FA exigida/ inválida
+        const msg = (error.message || '').toLowerCase();
+        if (
+          error.status === 401 &&
+          (msg.includes('2fa') || msg.includes('otp') || msg.includes('codigo'))
+        ) {
+          setOtpRequired(true);
+          setErrors((prev) => ({ ...prev, otp_code: 'Informe o código do autenticador' }));
+        } else {
+          Alert.alert('Erro de Login', error.message);
+        }
       } else {
         Alert.alert('Erro', 'Ocorreu um erro inesperado. Tente novamente.');
       }
@@ -149,6 +164,33 @@ export default function LoginScreen() {
                 <Text className="mt-1 text-sm text-red-500">{errors.password}</Text>
               )}
             </View>
+
+            {/* Campo OTP (2FA) */}
+            {otpRequired && (
+              <View className="mb-4">
+                <Text className="mb-2 font-medium text-gray-700">Código 2FA</Text>
+                <View className="relative">
+                  <View className="absolute left-3 top-1/2 z-10 -translate-y-1/2">
+                    <Ionicons name="key-outline" size={20} color="#9CA3AF" />
+                  </View>
+                  <TextInput
+                    placeholder="6 dígitos"
+                    value={formData.otp_code || ''}
+                    onChangeText={(text) =>
+                      handleInputChange('otp_code', text.replace(/\D/g, '').slice(0, 6))
+                    }
+                    keyboardType="number-pad"
+                    className={`rounded-lg border py-3 pl-10 pr-4 text-base ${
+                      errors.otp_code ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    maxLength={6}
+                  />
+                </View>
+                {errors.otp_code && (
+                  <Text className="mt-1 text-sm text-red-500">{errors.otp_code}</Text>
+                )}
+              </View>
+            )}
 
             {/* Exibe erros gerais da API */}
             {errors.non_field_errors && (
