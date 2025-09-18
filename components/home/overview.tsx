@@ -169,13 +169,8 @@ export default function Overview() {
     <Container>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="py-2">
-          <Text
-            className={`${isSmallScreen ? 'text-2xl' : 'text-3xl'} mb-4 font-extrabold text-gray-900`}>
-            Visão Geral
-          </Text>
-
           {/* Overview Cards - responsive 1/2-column grid without gap prop */}
-          <View className="mb-6 flex-row flex-wrap">
+          <View className="mb-2 flex-row flex-wrap">
             {overviewCards.map((card, index) => {
               const twoColumns = !isSmallScreen; // 1 col on very small screens, 2 cols otherwise
               const isLeft = index % 2 === 0;
@@ -202,7 +197,7 @@ export default function Overview() {
             </View>
 
             {/* Ranking */}
-            <View className="flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+            <View className="mt-6 flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
               <Text className="mb-2 text-lg font-semibold text-green-800">Ranking Mensal</Text>
               <Text className="mb-4 text-sm text-gray-600">Top 5 turmas mais engajadas</Text>
               <View>
