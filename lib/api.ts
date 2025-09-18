@@ -242,6 +242,21 @@ class APIService {
       method: 'DELETE',
     });
   }
+
+  /**
+   * Makes a PATCH request to the specified endpoint
+   * @param url - API endpoint URL (relative to baseURL)
+   * @param data - Request body data (will be JSON stringified)
+   * @returns Promise resolving to response data
+   * @throws {APIError} When network request fails or server returns error status
+   * @throws {APIValidationError} When server returns HTTP 400 with field validation errors
+   */
+  public async patch<T>(url: string, data?: unknown): Promise<T> {
+    return await this.makeRequest<T>(url, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 /**
