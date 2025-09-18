@@ -14,6 +14,7 @@ export default function TabLayout() {
           tabBarShowLabel: false,
           tabBarActiveTintColor: 'green',
           headerTitleAlign: 'center',
+          tabBarStyle: isStudent() ? { display: 'none' } : {},
         }}>
         <Tabs.Screen
           name="index"
