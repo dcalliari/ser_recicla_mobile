@@ -120,13 +120,8 @@ export default function Metrics() {
     <Container>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-4">
-          <Text
-            className={`${isSmallScreen ? 'text-xl' : 'text-2xl'} mb-6 font-bold text-gray-900`}>
-            Métricas
-          </Text>
-
           {/* Default to monthly metrics */}
-          <View className="mb-6">
+          <View className="mb-4">
             <MetricCard
               title="Total Coletado"
               value={metricsData.monthly.collection}
