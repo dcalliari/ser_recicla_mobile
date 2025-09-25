@@ -55,11 +55,17 @@ export class AuthService {
    * Validates a matricula number.
    * @param matricula - The matricula number to validate.
    * @throws {APIError | APIValidationError} If the request fails or validation errors occur.
-   * @returns {Promise<{valid: boolean, turma?: string | null, curso?: string | null, message?: string}>} The validation result.
+   * @returns {Promise<{valid: boolean, turma?: string | null, curso?: string | null, message?: string, multiple?: boolean, opcoes?: any[], user_id?: number}>} The validation result.
    */
-  async validateMatricula(
-    matricula: string
-  ): Promise<{ valid: boolean; turma?: string | null; curso?: string | null; message?: string }> {
+  async validateMatricula(matricula: string): Promise<{
+    valid: boolean;
+    turma?: string | null;
+    curso?: string | null;
+    message?: string;
+    multiple?: boolean;
+    opcoes?: any[];
+    user_id?: number;
+  }> {
     return await api.post('/v1/auth/validar-matricula/', { matricula });
   }
 

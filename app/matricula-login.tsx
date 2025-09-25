@@ -28,15 +28,27 @@ export default function MatriculaLoginScreen() {
       const response = await auth.validateMatricula(matricula.trim());
 
       if (response.valid) {
-        // Navigate to completion screen with matricula and additional info
-        router.push({
-          pathname: '/completar-cadastro' as any,
-          params: {
-            matricula: matricula.trim(),
-            turma: response.turma || '',
-            curso: response.curso || '',
-          },
-        });
+        if (response.multiple) {
+          // Navigate to institution selection screen
+          router.push({
+            pathname: '/selecionar-instituicao' as any,
+            params: {
+              matricula: matricula.trim(),
+              opcoes: JSON.stringify(response.opcoes),
+            },
+          });
+        } else {
+          // Navigate to completion screen with matricula and additional info
+          router.push({
+            pathname: '/completar-cadastro' as any,
+            params: {
+              matricula: matricula.trim(),
+              turma: response.turma || '',
+              curso: response.curso || '',
+              user_id: response.user_id?.toString() || '',
+            },
+          });
+        }
       } else {
         Alert.alert(
           'Matrícula Inválida',
