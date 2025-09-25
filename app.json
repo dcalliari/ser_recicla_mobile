@@ -9,7 +9,11 @@
       "output": "static",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-web-browser", "expo-font"],
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "expo-font"
+    ],
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
@@ -22,7 +26,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -32,6 +38,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.ser_recicla_mobile"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9e645efa-a0bc-4375-8e52-07634d06cbdb"
+      }
     }
   }
 }
