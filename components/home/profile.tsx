@@ -6,13 +6,14 @@ import {
   TextInput,
   ScrollView,
   Dimensions,
-  Image,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { Container } from '~/components/Container';
 import { useAuthStore } from '~/store/store';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '~/lib/api';
+import { APIValidationError } from '~/lib/api';
 
 const { width } = Dimensions.get('window');
 const isSmallScreen = width < 380;
@@ -72,24 +73,40 @@ export default function Profile() {
   // 2FA setup and management
   const handleEnable2FA = async () => {
     try {
-      const setup = await api.post<{ qr: string; secret: string }>('/v1/auth/2fa/setup/');
-      setTwoFAQr(setup.qr);
-      // If needed in future: setup.secret
-      Alert.alert('Quase lá', 'Escaneie o QR no seu app autenticador e insira o código.');
-    } catch {
-      Alert.alert('Erro', 'Não foi possível iniciar 2FA.');
+      type ResponseApi2FaType = {
+        secret_key: string;
+        uri: string;
+      };
+      const urlActive2Fa = '/v1/auth/2fa/activate';
+      const ResponseApi2Fa = await api.post<ResponseApi2FaType>(urlActive2Fa);
+      const SecretKey = ResponseApi2Fa.secret_key;
+
+      setTwoFAQr(SecretKey);
+      setTwoFACode('');
+    } catch (error: any) {
+      console.error('2FA setup error:', error);
+      const errorMessage = error?.message || 'Erro desconhecido';
+      Alert.alert('Erro', `Não foi possível iniciar 2FA: ${errorMessage}`);
     }
   };
 
   const handleConfirmEnable2FA = async () => {
+    if (twoFACode.length !== 6) {
+      Alert.alert('Código inválido', 'Por favor, insira um código de 6 dígitos.');
+      return;
+    }
+
     try {
-      await api.post('/v1/auth/2fa/enable/', { otp_code: twoFACode });
+      const TwoFaVerificationUrl = '/v1/auth/2fa/verify';
+      await api.post(TwoFaVerificationUrl, { totp_code: twoFACode });
       setTwoFAEnabled(true);
       setTwoFAQr(null);
       setTwoFACode('');
       Alert.alert('2FA Ativado', 'Autenticação de dois fatores ativada com sucesso.');
-    } catch {
-      Alert.alert('Código inválido', 'Confira o código e tente novamente.');
+    } catch (error: any) {
+      console.error('2FA enable error:', error);
+      const errorMessage = error?.message || 'Código inválido ou erro desconhecido';
+      Alert.alert('Erro', errorMessage);
     }
   };
 
@@ -104,13 +121,33 @@ export default function Profile() {
             await api.post('/v1/auth/2fa/disable/');
             setTwoFAEnabled(false);
             Alert.alert('2FA Desativado', 'Você poderá ativar novamente quando quiser.');
-          } catch {
-            Alert.alert('Erro', 'Não foi possível desativar o 2FA.');
+          } catch (error: any) {
+            console.error('2FA disable error:', error);
+            const errorMessage = error?.message || 'Erro desconhecido';
+            Alert.alert('Erro', `Não foi possível desativar o 2FA: ${errorMessage}`);
           }
         },
       },
     ]);
   };
+
+  useEffect(() => {
+    const check2FAstatus = async () => {
+      try {
+        const TwoFaVerificationUrl = '/v1/auth/2fa/verify';
+        // Try to verify with empty code - if it gives validation error, 2FA is enabled
+        await api.post(TwoFaVerificationUrl, { totp_code: '' });
+        setTwoFAEnabled(false);
+      } catch (error: any) {
+        if (error instanceof APIValidationError) {
+          setTwoFAEnabled(true);
+        } else {
+          setTwoFAEnabled(false);
+        }
+      }
+    };
+    check2FAstatus();
+  }, []);
 
   return (
     <Container>
@@ -291,32 +328,59 @@ export default function Profile() {
                 </TouchableOpacity>
               )}
 
-              {/* Show QR and confirmation input */}
+              {/* Show secret key and confirmation input */}
               {!twoFAEnabled && twoFAQr && (
                 <View>
                   <Text className="mb-2 text-sm font-medium text-gray-700">
-                    Escaneie o QR no autenticador
+                    Configure seu app autenticador
                   </Text>
-                  <Image
-                    source={{ uri: twoFAQr }}
-                    style={{ width: 180, height: 180, alignSelf: 'flex-start', marginBottom: 12 }}
-                  />
-                  <Text className="mb-2 text-sm font-medium text-gray-700">
-                    Código do autenticador
+                  <Text className="mb-2 text-sm text-gray-600">
+                    Copie esta chave secreta e configure no seu app autenticador (Google
+                    Authenticator, Authy, etc.)
                   </Text>
-                  <TextInput
-                    className="w-48 rounded-lg border border-gray-300 px-3 py-2"
-                    placeholder="6 dígitos"
-                    value={twoFACode}
-                    onChangeText={(t) => setTwoFACode(t.replace(/\D/g, '').slice(0, 6))}
-                    keyboardType="number-pad"
-                    maxLength={6}
-                  />
                   <TouchableOpacity
-                    onPress={handleConfirmEnable2FA}
-                    className="mt-3 self-start rounded-lg bg-green-600 px-4 py-2">
-                    <Text className="text-sm font-medium text-white">Confirmar Ativação</Text>
+                    onPress={async () => {
+                      await Clipboard.setStringAsync(twoFAQr);
+                    }}
+                    className="mb-4 rounded-lg bg-gray-100 p-3 active:bg-gray-200">
+                    <Text className="break-all text-center font-mono text-sm text-gray-800">
+                      {twoFAQr}
+                    </Text>
+                    <Text className="mt-1 text-center text-xs text-gray-500">
+                      Toque para copiar
+                    </Text>
                   </TouchableOpacity>
+                  <View className="mb-4 items-center">
+                    <Text className="mb-2 text-sm font-medium text-gray-700">
+                      Código do autenticador
+                    </Text>
+                    <TextInput
+                      className="w-48 rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="6 dígitos"
+                      value={twoFACode}
+                      onChangeText={(t) => setTwoFACode(t.replace(/\D/g, '').slice(0, 6))}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                    />
+                  </View>
+                  <View className="flex-row justify-center space-x-3">
+                    <TouchableOpacity
+                      onPress={handleConfirmEnable2FA}
+                      disabled={twoFACode.length !== 6}
+                      className={`mr-2 rounded-lg px-4 py-2 ${
+                        twoFACode.length === 6 ? 'bg-green-600' : 'bg-gray-400'
+                      }`}>
+                      <Text className="text-sm font-medium text-white">Confirmar Ativação</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setTwoFAQr(null);
+                        setTwoFACode('');
+                      }}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2">
+                      <Text className="text-sm font-medium text-gray-700">Cancelar</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
 
