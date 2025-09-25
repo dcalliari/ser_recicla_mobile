@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { api } from '~/lib/api';
 import type { Usuario } from '~/lib/types/user';
@@ -148,17 +149,24 @@ export default function Users() {
   };
 
   const handlePreCadastro = async () => {
-    if (matriculas.length === 0) {
+    // Include any matricula currently in the input
+    const finalMatriculas = [...matriculas];
+    if (matriculaInput.trim()) {
+      finalMatriculas.push(matriculaInput.trim());
+    }
+
+    if (finalMatriculas.length === 0) {
       Alert.alert('Erro', 'Adicione pelo menos uma matrícula');
       return;
     }
 
     setSubmitting(true);
     try {
-      await api.post('/v1/auth/pre-cadastro-alunos/', { matriculas });
+      await api.post('/v1/auth/pre-cadastro-alunos/', { matriculas: finalMatriculas });
       Alert.alert('Sucesso', 'Pré-cadastro realizado com sucesso');
       setModalVisible(false);
       setMatriculas([]);
+      setMatriculaInput('');
       fetchUsuarios(); // Refresh the list
     } catch {
       Alert.alert('Erro', 'Falha no pré-cadastro');
@@ -460,7 +468,7 @@ export default function Users() {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}>
         <View className="flex-1 justify-center bg-black/20 p-4">
-          <View className="rounded-lg bg-white p-6 shadow-xl">
+          <View className="max-h-[80vh] rounded-lg bg-white p-6 shadow-xl">
             {/* Botão Limpar no canto superior direito */}
             <View className="absolute right-4 top-4 z-10">
               <TouchableOpacity
@@ -480,7 +488,7 @@ export default function Users() {
               Adicione múltiplas matrículas para pré-cadastro em lote
             </Text>
 
-            <View className="mb-4">
+            <ScrollView showsVerticalScrollIndicator={false} className="mb-4 max-h-[200px]">
               <View className="min-h-[50px] flex-row flex-wrap items-center rounded-lg border border-gray-300 bg-gray-50 p-3">
                 {matriculas.map((matricula, index) => (
                   <View
@@ -559,7 +567,7 @@ export default function Users() {
                   autoCorrect={false}
                 />
               </View>
-            </View>
+            </ScrollView>
 
             <View className="flex-row justify-end space-x-3">
               <TouchableOpacity
