@@ -32,10 +32,16 @@ export default function CompletarCadastroScreen() {
     matricula: matriculaParam,
     turma: turmaParam,
     curso: cursoParam,
+    unidade: unidadeParam,
+    universidade: universidadeParam,
+    user_id: userIdParam,
   } = useLocalSearchParams<{
     matricula: string;
     turma?: string;
     curso?: string;
+    unidade?: string;
+    universidade?: string;
+    user_id?: string;
   }>();
   const { checkAuth } = useAuthStore();
 
@@ -79,7 +85,8 @@ export default function CompletarCadastroScreen() {
     setIsLoading(true);
 
     try {
-      await auth.finalizarCadastro({
+      const payload = {
+        user_id: userIdParam || '',
         matricula: formData.matricula,
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
@@ -87,7 +94,9 @@ export default function CompletarCadastroScreen() {
         username: formData.username.trim(),
         password: formData.password,
         password_confirm: formData.password_confirm,
-      });
+      };
+      console.log('Submitting payload:', payload);
+      await auth.finalizarCadastro(payload);
 
       // Update auth store
       await checkAuth();
@@ -168,21 +177,35 @@ export default function CompletarCadastroScreen() {
               </View>
 
               {/* Informações da Matrícula */}
-              {(turmaParam || cursoParam) && (
+              {(turmaParam || cursoParam || unidadeParam || universidadeParam) && (
                 <View className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4">
                   <Text className="mb-2 text-sm font-medium text-green-800">
                     Informações da Matrícula
                   </Text>
-                  {turmaParam && (
+                  {universidadeParam && (
                     <View className="mb-1 flex-row items-center">
-                      <Ionicons name="school-outline" size={16} color="#059669" />
-                      <Text className="ml-2 text-sm text-green-700">Turma: {turmaParam}</Text>
+                      <Ionicons name="business-outline" size={16} color="#059669" />
+                      <Text className="ml-2 text-sm text-green-700">
+                        Universidade: {universidadeParam}
+                      </Text>
+                    </View>
+                  )}
+                  {unidadeParam && (
+                    <View className="mb-1 flex-row items-center">
+                      <Ionicons name="library-outline" size={16} color="#059669" />
+                      <Text className="ml-2 text-sm text-green-700">Unidade: {unidadeParam}</Text>
                     </View>
                   )}
                   {cursoParam && (
-                    <View className="flex-row items-center">
+                    <View className="mb-1 flex-row items-center">
                       <Ionicons name="book-outline" size={16} color="#059669" />
                       <Text className="ml-2 text-sm text-green-700">Curso: {cursoParam}</Text>
+                    </View>
+                  )}
+                  {turmaParam && (
+                    <View className="flex-row items-center">
+                      <Ionicons name="school-outline" size={16} color="#059669" />
+                      <Text className="ml-2 text-sm text-green-700">Turma: {turmaParam}</Text>
                     </View>
                   )}
                 </View>
